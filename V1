@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Padel 5 Pro Manager</title>
+    <style>
+        :root {
+            --bg-color: #121826;
+            --card-bg: #1e2532;
+            --accent-color: #ccff00; /* Padel Green */
+            --accent-hover: #b3e600;
+            --text-primary: #ffffff;
+            --text-secondary: #a0aec0;
+            --danger-color: #ff4757;
+            --success-color: #2ed573;
+            --warning-color: #ffa502;
+            --border-radius: 16px;
+            --shadow: 0 4px 20px rgba(0,0,0,0.3);
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            padding: 20px 10px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px; /* حجم مناسب للموبايل */
+            margin: 0 auto;
+        }
+
+        h1, h2, h3 { margin: 0; padding: 0; text-align: center; }
+        h2#appTitle { 
+            font-size: 28px; 
+            margin-bottom: 20px; 
+            color: var(--accent-color); 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(204, 255, 0, 0.3);
+        }
+
+        /* --- UI Components --- */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow);
+            margin-bottom: 20px;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 14px;
+            background: #2d3748;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+            transition: 0.3s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            background: #232b38;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-primary { background: var(--accent-color); color: #121826; }
+        .btn-secondary { background: #4a5568; color: white; }
+        .btn-danger { background: var(--danger-color); color: white; }
+        .btn-success { background: var(--success-color); color: white; }
+        .btn-icon { width: auto; padding: 10px 15px; margin: 0; }
+
+        /* --- Player List --- */
+        .player-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255,255,255,0.05);
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .player-item .remove { color: var(--danger-color); cursor: pointer; padding: 5px; }
+
+        /* --- Match Card --- */
+        .match-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .match-header {
+            background: rgba(204, 255, 0, 0.1);
+            color: var(--accent-color);
+            padding: 8px 15px;
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        .match-body {
+            display: flex;
+            height: 100px;
+            position: relative;
+        }
+        .vs-badge {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: #2d3748;
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            border: 2px solid var(--card-bg);
+            z-index: 2;
+        }
+        .team-btn {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin: 0;
+            border-radius: 0;
+        }
+        .team-btn.won { background: rgba(46, 213, 115, 0.2); color: var(--success-color); pointer-events: none; }
+        .team-btn.lost { opacity: 0.4; }
+        .team-names { font-size: 14px; line-height: 1.4; }
+        .winner-icon { font-size: 12px; margin-top: 4px; display: none; }
+        .team-btn.won .winner-icon { display: block; }
+
+        /* --- Leaderboard --- */
+        .leaderboard { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+        .leaderboard th { text-align: center; color: var(--text-secondary); padding: 10px; font-size: 12px; }
+        .leaderboard td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        .leaderboard tr:first-child td { color: var(--accent-color); font-weight: bold; }
+        .leaderboard .points { color: var(--accent-color); font-weight: bold; background: rgba(204, 255, 0, 0.1); border-radius: 8px; padding: 5px 10px; }
+
+        /* --- Views Management --- */
+        .view-section { display: none; }
+        .view-section.active { display: block; animation: slideUp 0.3s ease-out; }
+
+        /* --- Winner Screen --- */
+        .winner-content { text-align: center; padding: 40px 20px; }
+        .winner-trophy { font-size: 80px; margin-bottom: 20px; display: block; animation: bounce 1.5s infinite; }
+        .winner-name { font-size: 26px; color: var(--accent-color); margin-bottom: 10px; }
+
+        /* --- Animations --- */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* --- Custom Toast Notification --- */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 999;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            font-size: 14px;
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 2.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2 id="appTitle">🎾 Padel Semi-Tournment</h2>
+
+    <div id="setupView" class="view-section active">
+        <div class="card">
+            <h3 style="margin-bottom:15px; color:var(--text-secondary)">إعداد اللاعبين</h3>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="playerName" placeholder="اسم اللاعب..." onkeypress="handleEnter(event)">
+                <button class="btn-primary btn-icon" onclick="app.addPlayer()">+</button>
+            </div>
+            
+            <div id="playerList" style="margin-top:15px; min-height: 50px;"></div>
+            <p id="playerCountMsg" style="text-align:center; font-size:12px; color:var(--text-secondary)"></p>
+        </div>
+
+        <div class="card">
+            <h3 style="margin-bottom:15px; color:var(--text-secondary)">إعدادات البطولة</h3>
+            <div style="display:flex; justify-content:space-between; gap:10px;">
+                <div style="flex:1">
+                    <label style="font-size:12px; color:var(--text-secondary)">ملاعب</label>
+                    <input type="number" id="courtCount" value="2" readonly style="opacity:0.6">
+                </div>
+                <div style="flex:1">
+                    <label style="font-size:12px; color:var(--text-secondary)">نقاط الفوز</label>
+                    <input type="number" id="winPoints" value="100">
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="app.generateAndPreview()">إنشاء الجدول والمراجعة 📋</button>
+        <button class="btn-secondary" onclick="app.hardReset()" style="background:transparent; border:1px solid #4a5568; margin-top:15px">⚠️ إعادة ضبط المصنع</button>
+    </div>
+
+    <div id="previewView" class="view-section">
+        <div class="card">
+            <h3>معاينة المباريات</h3>
+            <p style="text-align:center; font-size:13px; color:var(--text-secondary); margin-bottom:15px">يمكنك تعديل الشركاء يدوياً قبل البدء</p>
+            <div id="previewContainer" style="max-height:60vh; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+        <div style="position:sticky; bottom:10px; background:var(--bg-color); padding-top:10px; z-index:10;">
+            <button class="btn-primary" onclick="app.confirmAndStart()">✅ اعتماد وبدء البطولة</button>
+            <button class="btn-danger" onclick="viewManager.show('setup')">❌ إلغاء</button>
+        </div>
+    </div>
+
+    <div id="gameView" class="view-section">
+        <div class="card" style="padding: 10px;">
+            <table class="leaderboard" id="leaderboardTable">
+                <thead><tr><th>#</th><th>اللاعب</th><th>L</th><th>W</th><th>Pts</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; background:var(--card-bg); padding:10px; border-radius:12px;">
+            <button class="btn-secondary btn-icon" onclick="app.navigateRound(-1)">◀</button>
+            <span style="font-weight:bold; font-size:14px">جولة <span id="roundIndicator" style="color:var(--accent-color)">1/7</span></span>
+            <button class="btn-secondary btn-icon" id="btnNavNext" onclick="app.navigateRound(1)" style="visibility:hidden">▶</button>
+        </div>
+
+        <div id="matchesContainer"></div>
+
+        <button id="nextRoundBtn" class="btn-primary" style="display:none" onclick="app.startNextRound()">بدء الجولة التالية 🔄</button>
+        <button class="btn-danger" style="margin-top:20px; font-size:13px; padding:12px" onclick="app.endTournamentNow()">🏳️ إنهاء البطولة مبكراً</button>
+    </div>
+
+    <div id="winnerView" class="view-section">
+        <div class="winner-content">
+            <span class="winner-trophy">🏆</span>
+            <h2 id="winnerTitle"></h2>
+            <p id="winnerMessage" style="color:var(--text-secondary); margin-top:10px; line-height:1.6"></p>
+            
+            <div style="margin-top:40px;">
+                <button class="btn-primary" onclick="app.resetGameData()">🏆 بطولة جديدة</button>
+                <button class="btn-secondary" onclick="viewManager.show('game')" style="background:transparent; border:1px solid #4a5568">مراجعة النتائج</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="toast">رسالة تنبيه</div>
+
+<script>
+    // ==========================================
+    // 0. Utilities & Scheduler
+    // ==========================================
+    const showToast = (msg) => {
+        const x = document.getElementById("toast");
+        x.innerText = msg;
+        x.className = "show";
+        setTimeout(() => { x.className = x.className.replace("show", ""); }, 3000);
+    }
+
+    class PadelScheduler {
+        constructor(players) {
+            this.players = players;
+            this.history = { partners: Array(8).fill().map(()=>Array(8).fill(0)), opponents: Array(8).fill().map(()=>Array(8).fill(0)) };
+            this.schedule = [];
+        }
+        
+        generate() {
+            for(let i=0; i<5000; i++) {
+                this.schedule = [];
+                this.history.partners = Array(8).fill().map(()=>Array(8).fill(0));
+                this.history.opponents = Array(8).fill().map(()=>Array(8).fill(0));
+                if(this.solve(0)) return this.format();
+            }
+            return null;
+        }
+
+        solve(r) {
+            if(r===7) return true;
+            let matches=[], used=Array(8).fill(false);
+            if(this.findMatches(r, matches, used)) {
+                this.schedule.push(matches);
+                if(this.solve(r+1)) return true;
+                this.schedule.pop();
+                this.revert(matches);
+            }
+            return false;
+        }
+
+        findMatches(r, matches, used) {
+            if(matches.length===2) return true;
+            let candidates = [0,1,2,3,4,5,6,7].sort(() => Math.random() - 0.5);
+            
+            let p1 = candidates.find(i => !used[i]);
+            if(p1 === undefined) return false;
+            used[p1] = true;
+
+            for(let p2 of candidates) {
+                if(p2===p1 || used[p2] || this.history.partners[p1][p2]) continue;
+                used[p2] = true;
+                for(let p3 of candidates) {
+                    if(used[p3] || this.history.opponents[p1][p3]>=2 || this.history.opponents[p2][p3]>=2) continue;
+                    used[p3] = true;
+                    for(let p4 of candidates) {
+                        if(used[p4] || this.history.partners[p3][p4]) continue;
+                        if(this.history.opponents[p1][p4]>=2 || this.history.opponents[p2][p4]>=2) continue;
+                        if(this.history.opponents[p3][p1]>=2 || this.history.opponents[p4][p1]>=2) continue;
+                        if(this.history.opponents[p3][p2]>=2 || this.history.opponents[p4][p2]>=2) continue;
+
+                        used[p4] = true;
+                        let m = {teamA:[p1,p2], teamB:[p3,p4]};
+                        this.update(m, 1);
+                        matches.push(m);
+                        
+                        if(this.findMatches(r, matches, used)) return true;
+                        
+                        matches.pop();
+                        this.update(m, -1);
+                        used[p4] = false;
+                    }
+                    used[p3] = false;
+                }
+                used[p2] = false;
+            }
+            used[p1] = false;
+            return false;
+        }
+
+        update(m, v) {
+            const [a,b] = m.teamA; const [c,d] = m.teamB;
+            this.history.partners[a][b]+=v; this.history.partners[b][a]+=v;
+            this.history.partners[c][d]+=v; this.history.partners[d][c]+=v;
+            [a,b].forEach(p1 => [c,d].forEach(p2 => {
+                this.history.opponents[p1][p2]+=v; this.history.opponents[p2][p1]+=v;
+            }));
+        }
+        revert(matches) { matches.forEach(m => this.update(m, -1)); }
+        format() {
+            return this.schedule.map((r, i) => ({
+                roundNumber: i+1,
+                matches: r.map((m, idx) => ({
+                    id: idx,
+                    teamA: [this.players[m.teamA[0]], this.players[m.teamA[1]]],
+                    teamB: [this.players[m.teamB[0]], this.players[m.teamB[1]]]
+                }))
+            }));
+        }
+    }
+
+    // ==========================================
+    // 1. View Manager (Controls Screens)
+    // ==========================================
+    const viewManager = {
+        views: ['setup', 'preview', 'game', 'winner'],
+        show(viewName) {
+            this.views.forEach(v => {
+                const el = document.getElementById(v + 'View');
+                if(v === viewName) {
+                    el.classList.add('active');
+                } else {
+                    el.classList.remove('active');
+                }
+            });
+            window.scrollTo(0,0);
+        }
+    };
+
+    // ==========================================
+    // 2. Main App Logic
+    // ==========================================
+    const app = {
+        state: {
+            players: [],
+            roundsHistory: [],
+            currentRound: 0,
+            viewingRound: 0,
+            pointsPerWin: 100,
+            tempSchedule: []
+        },
+
+        init() {
+            const saved = localStorage.getItem('padel5_pro_state');
+            if(saved) {
+                this.state = JSON.parse(saved);
+                if(this.state.roundsHistory.length > 0 && this.state.currentRound > 0) {
+                    this.renderGame();
+                    viewManager.show('game');
+                } else {
+                    this.renderPlayerList();
+                }
+            } else {
+                this.renderPlayerList();
+            }
+        },
+
+        save() {
+            localStorage.setItem('padel5_pro_state', JSON.stringify(this.state));
+        },
+
+        addPlayer() {
+            const input = document.getElementById('playerName');
+            const name = input.value.trim();
+            if(!name) return;
+            if(this.state.players.find(p => p.name === name)) { showToast("الاسم موجود بالفعل!"); return; }
+            if(this.state.players.length >= 8) { showToast("اكتمل العدد (8 لاعبين)"); return; }
+
+            this.state.players.push({ name, played:0, won:0, points:0 });
+            input.value = '';
+            this.save();
+            this.renderPlayerList();
+            input.focus();
+        },
+
+        removePlayer(idx) {
+            this.state.players.splice(idx, 1);
+            this.save();
+            this.renderPlayerList();
+        },
+
+        renderPlayerList() {
+            const list = document.getElementById('playerList');
+            const msg = document.getElementById('playerCountMsg');
+            
+            list.innerHTML = this.state.players.map((p, i) => `
+                <div class="player-item">
+                    <span>${i+1}. ${p.name}</span>
+                    <span class="remove" onclick="app.removePlayer(${i})">✕</span>
+                </div>
+            `).join('');
+            
+            const count = this.state.players.length;
+            msg.innerText = `${count} / 8 لاعبين`;
+            msg.style.color = count === 8 ? "var(--success-color)" : "var(--text-secondary)";
+        },
+
+        generateAndPreview() {
+            if(this.state.players.length !== 8) { showToast("لازم 8 لاعبين بالظبط!"); return; }
+            
+            const scheduler = new PadelScheduler(this.state.players.map(p => p.name));
+            const schedule = scheduler.generate();
+            
+            if(!schedule) { showToast("تعذر إنشاء الجدول، حاول مرة أخرى"); return; }
+            
+            this.state.tempSchedule = schedule;
+            this.renderPreview();
+            viewManager.show('preview');
+        },
+
+        renderPreview() {
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = this.state.tempSchedule.map((round, rIdx) => `
+                <div class="card" style="padding:15px; margin-bottom:10px;">
+                    <div style="font-weight:bold; color:var(--accent-color); margin-bottom:10px;">الجولة ${round.roundNumber}</div>
+                    ${round.matches.map((m, mIdx) => `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:5px;">
+                            <div style="flex:1; display:flex; flex-direction:column; gap:5px">
+                                <select id="p_${rIdx}_${mIdx}_tA1" style="padding:8px; font-size:12px; margin:0">${this.getOpts(m.teamA[0])}</select>
+                                <select id="p_${rIdx}_${mIdx}_tA2" style="padding:8px; font-size:12px; margin:0">${this.getOpts(m.teamA[1])}</select>
+                            </div>
+                            <span style="font-weight:bold; font-size:12px; color:var(--danger-color)">VS</span>
+                            <div style="flex:1; display:flex; flex-direction:column; gap:5px">
+                                <select id="p_${rIdx}_${mIdx}_tB1" style="padding:8px; font-size:12px; margin:0">${this.getOpts(m.teamB[0])}</select>
+                                <select id="p_${rIdx}_${mIdx}_tB2" style="padding:8px; font-size:12px; margin:0">${this.getOpts(m.teamB[1])}</select>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        },
+
+        getOpts(selected) {
+            return this.state.players.map(p => `<option value="${p.name}" ${p.name===selected?'selected':''}>${p.name}</option>`).join('');
+        },
+
+        confirmAndStart() {
+            this.state.pointsPerWin = parseInt(document.getElementById('winPoints').value) || 100;
+            const history = [];
+            
+            for(let r=0; r<7; r++) {
+                const matches = [];
+                for(let m=0; m<2; m++) {
+                    matches.push({
+                        id: m,
+                        teamA: [
+                            document.getElementById(`p_${r}_${m}_tA1`).value,
+                            document.getElementById(`p_${r}_${m}_tA2`).value
+                        ],
+                        teamB: [
+                            document.getElementById(`p_${r}_${m}_tB1`).value,
+                            document.getElementById(`p_${r}_${m}_tB2`).value
+                        ],
+                        winner: null
+                    });
+                }
+                history.push({ roundNumber: r+1, matches });
+            }
+
+            this.state.roundsHistory = history;
+            this.state.currentRound = 1;
+            this.state.viewingRound = 1;
+            // Reset scores
+            this.state.players.forEach(p => { p.played=0; p.won=0; p.points=0; });
+            
+            this.save();
+            this.renderGame();
+            viewManager.show('game');
+        },
+
+        renderGame() {
+            this.renderLeaderboard();
+            this.renderMatches();
+            this.updateNav();
+        },
+
+        renderLeaderboard() {
+            const tbody = document.querySelector('#leaderboardTable tbody');
+            const sorted = [...this.state.players].sort((a,b) => b.points - a.points || b.won - a.won);
+            tbody.innerHTML = sorted.map((p, i) => `
+                <tr>
+                    <td>${i+1}</td>
+                    <td>${p.name}</td>
+                    <td>${p.played}</td>
+                    <td>${p.won}</td>
+                    <td><span class="points">${p.points}</span></td>
+                </tr>
+            `).join('');
+        },
+
+        renderMatches() {
+            const container = document.getElementById('matchesContainer');
+            const roundData = this.state.roundsHistory[this.state.viewingRound - 1];
+            if(!roundData) return;
+
+            document.getElementById('roundIndicator').innerText = `${this.state.viewingRound} / 7`;
+
+            container.innerHTML = roundData.matches.map(m => {
+                const tA = JSON.stringify(m.teamA).replace(/"/g, "'");
+                const tB = JSON.stringify(m.teamB).replace(/"/g, "'");
+                return `
+                <div class="match-card">
+                    <div class="match-header">
+                        <span>ملعب ${m.id + 1}</span>
+                    </div>
+                    <div class="match-body">
+                        <button class="team-btn ${m.winner==='right'?'won':(m.winner==='left'?'lost':'')}" 
+                            onclick="app.handleScore(${this.state.viewingRound}, ${m.id}, 'right', ${tA}, ${tB})">
+                            <div class="team-names">${m.teamA[0]}<br>&<br>${m.teamA[1]}</div>
+                            <div class="winner-icon">✅ فائز</div>
+                        </button>
+                        <div class="vs-badge">VS</div>
+                        <button class="team-btn ${m.winner==='left'?'won':(m.winner==='right'?'lost':'')}" 
+                             onclick="app.handleScore(${this.state.viewingRound}, ${m.id}, 'left', ${tB}, ${tA})">
+                            <div class="team-names">${m.teamB[0]}<br>&<br>${m.teamB[1]}</div>
+                            <div class="winner-icon">✅ فائز</div>
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        },
+
+        handleScore(rNum, mId, side, winners, losers) {
+            // Prevent editing past rounds logic could go here, but allowing edits is better UX
+            const round = this.state.roundsHistory[rNum - 1];
+            const match = round.matches.find(m => m.id === mId);
+            
+            if(match.winner === side) return; // Same winner clicked
+
+            // Revert previous stats if any
+            if(match.winner) {
+                const prevWinners = match.winner === 'right' ? match.teamA : match.teamB;
+                const prevLosers = match.winner === 'right' ? match.teamB : match.teamA;
+                this.updateStats(prevWinners, -1, -this.state.pointsPerWin);
+                this.updateStats(prevLosers, 0, 0, -1); // Decrease played count
+            } else {
+                // First time clicking (increase played count for losers too)
+                this.updateStats(losers, 0, 0, 1);
+            }
+
+            // Apply new stats
+            this.updateStats(winners, 1, this.state.pointsPerWin, match.winner ? 0 : 1);
+            
+            match.winner = side;
+            this.save();
+            this.renderGame();
+        },
+
+        updateStats(names, won, points, played=0) {
+            this.state.players.forEach(p => {
+                if(names.includes(p.name)) {
+                    p.won += won;
+                    p.points += points;
+                    p.played += played;
+                }
+            });
+        },
+
+        navigateRound(dir) {
+            const newR = this.state.viewingRound + dir;
+            if(newR >= 1 && newR <= this.state.currentRound) {
+                this.state.viewingRound = newR;
+                this.renderMatches();
+                this.updateNav();
+            }
+        },
+
+        updateNav() {
+            const nextNav = document.getElementById('btnNavNext');
+            const nextRoundBtn = document.getElementById('nextRoundBtn');
+            
+            nextNav.style.visibility = this.state.viewingRound < this.state.currentRound ? 'visible' : 'hidden';
+
+            // Logic for Next Round Button
+            const currentRoundData = this.state.roundsHistory[this.state.currentRound - 1];
+            const isComplete = currentRoundData.matches.every(m => m.winner);
+            
+            if(this.state.viewingRound === this.state.currentRound && isComplete) {
+                nextRoundBtn.style.display = 'block';
+                if(this.state.currentRound >= 7) {
+                    nextRoundBtn.innerText = "إنهاء البطولة وتتويج الفائز 🏆";
+                    nextRoundBtn.classList.replace('btn-primary', 'btn-success');
+                    nextRoundBtn.onclick = () => this.showWinner();
+                } else {
+                    nextRoundBtn.innerText = "بدء الجولة التالية 🔄";
+                    nextRoundBtn.classList.replace('btn-success', 'btn-primary');
+                    nextRoundBtn.onclick = () => this.startNextRound();
+                }
+            } else {
+                nextRoundBtn.style.display = 'none';
+            }
+        },
+
+        startNextRound() {
+            if(this.state.currentRound < 7) {
+                this.state.currentRound++;
+                this.state.viewingRound = this.state.currentRound;
+                this.save();
+                this.renderGame();
+            }
+        },
+
+        endTournamentNow() {
+            if(confirm("هل أنت متأكد من إنهاء البطولة الآن؟")) {
+                this.showWinner();
+            }
+        },
+
+        showWinner() {
+            const sorted = [...this.state.players].sort((a,b) => b.points - a.points);
+            const max = sorted[0].points;
+            const winners = sorted.filter(p => p.points === max);
+            
+            const title = document.getElementById('winnerTitle');
+            const msg = document.getElementById('winnerMessage');
+
+            if(winners.length === 1) {
+                title.innerHTML = `البطل ${winners[0].name} 🥇`;
+                msg.innerHTML = `مبروك تحقيق المركز الأول منفرداً برصيد ${max} نقطة!`;
+            } else {
+                title.innerHTML = `تعادل أسطوري! 🤝`;
+                msg.innerHTML = `مبروك للأبطال (${winners.map(w=>w.name).join(' و ')}) على تقاسم الصدارة برصيد ${max} نقطة.`;
+            }
+
+            viewManager.show('winner');
+        },
+
+        resetGameData() {
+            if(confirm("بدء بطولة جديدة؟ (سيتم الاحتفاظ بالأسماء)")) {
+                // Keep players but reset stats
+                this.state.players.forEach(p => { p.played=0; p.won=0; p.points=0; });
+                this.state.currentRound = 0;
+                this.state.viewingRound = 0;
+                this.state.roundsHistory = [];
+                this.save();
+                viewManager.show('setup');
+            }
+        },
+
+        hardReset() {
+            if(confirm("تحذير: سيتم مسح كل البيانات بما فيها أسماء اللاعبين!")) {
+                localStorage.removeItem('padel5_pro_state');
+                location.reload();
+            }
+        }
+    };
+
+    // Helper for Input Enter Key
+    function handleEnter(e) { if(e.key === 'Enter') app.addPlayer(); }
+
+    // Start App
+    window.onload = () => app.init();
+
+</script>
+</body>
+</html>
